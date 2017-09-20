@@ -12,6 +12,22 @@ MIN_SOLVE_TIME_MILLIS = 1000
 def current_time_millis():
     return int(round(time.time() * 1000))
 
+def execute_task_repeatedly(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
+    '''
+    Executes task() repeatedly until min_execution_time has passed.
+    return the tuple (last_result, iterations, elaspsed_time_millis)
+    '''
+    iteration = 0
+    start_time = current_time_millis()
+    result = None
+    while True:
+        iteration += 1
+        result = task()
+        elapsed = current_time_millis() - start_time;
+        if (elapsed > MIN_SOLVE_TIME_MILLIS):
+            break
+    return result, iteration, elapsed
+
 def load_and_perform_solve(author_dir, filename):
     '''
     Loads a python module from the author dir, assuming it contains a function name solve without args.
@@ -21,16 +37,11 @@ def load_and_perform_solve(author_dir, filename):
     basename = os.path.basename(filename)
     solver = imp.load_source("%s_%s" % (author_dir, basename), os.path.join(author_dir, filename))
 
-    iteration = 0
-    start_time = current_time_millis()
-    while True:
-        iteration += 1
-        result = solver.solve()
-        elapsed = current_time_millis() - start_time;
-        if (elapsed > MIN_SOLVE_TIME_MILLIS):
-            break
+    task = lambda: solver.solve()
+    result, iterations, elapsed = execute_task_repeatedly(task)
 
-    return Result(author=author_dir, problem_name=basename, result=result, elapsed_millis=elapsed, iterations=iteration)
+    return Result(author=author_dir, problem_name=basename, result=result, elapsed_millis=elapsed, iterations=iterations)
+
 
 class Result():
     def __init__(self, author=None, problem_name=None, result=None, elapsed_millis=0, iterations=1):
