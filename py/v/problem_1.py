@@ -19,10 +19,10 @@ def solve():
 
 race = {
 	'author': 'valeria',
-    'problemName': '1',
-    'raceables': { 
-        'blocchetto': solve
-    }  
+	'problemName': '1',
+	'raceables': { 
+		'blocchetto': solve
+	}  
 }
 
 if __name__ == "__main__":
