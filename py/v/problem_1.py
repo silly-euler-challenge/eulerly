@@ -17,6 +17,14 @@ def solve():
 	
 	return somma
 
+race = {
+	'author': 'valeria',
+    'problemName': '1',
+    'raceables': { 
+        'blocchetto': solve
+    }  
+}
+
 if __name__ == "__main__":
     print solve()
     

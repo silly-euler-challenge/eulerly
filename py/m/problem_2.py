@@ -82,7 +82,15 @@ def solve(threshold=4000000):
                                                                 # every third Fibonacci number is even (sum of the previous 2 odds)
 
     return fib_partial_sum(last_even_fib_term) / 2              # sum of the even terms is half the total sum (see above)
-        
+
+race = {
+    'problemName': '2',
+    'author': 'marco',
+    'raceables': { 
+        'naive': solve_naive, 
+        'good': solve
+    }  
+}
 
 if __name__ == "__main__":
     print solve_naive()

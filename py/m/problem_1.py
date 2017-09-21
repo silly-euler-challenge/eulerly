@@ -30,6 +30,17 @@ def sum_of_mults(n, mult):
 def solve(n=1000, a=3, b=5):
     return sum_of_mults(n, a) + sum_of_mults(n, b) - sum_of_mults(n, a * b) # assumes a and b have no common factor.
 
+# export to be measured
+race = {
+    'problemName': '1',
+    'author': 'marco',
+    'raceables': { 
+        'naive': solve2, 
+        'good': solve
+    }  
+}
+ 
+
 if __name__ == "__main__":
     print solve()
     print solve2()
