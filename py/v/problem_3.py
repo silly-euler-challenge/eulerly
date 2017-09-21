@@ -23,7 +23,6 @@ def genera_primo(p):
 		candidato += 2
 	return candidato
 
-
 def calcola_fattore(N):
 	'''
 	Calcola i fattori primi dell'intero N 
@@ -37,7 +36,16 @@ def calcola_fattore(N):
 			N = N/primo
 	return max(fattori)
 
-
 def solve():
-
 	return calcola_fattore(600851475143)
+
+race = {
+	'author': 'valeria',
+	'problemName': '1',
+	'raceables': { 
+		'blocchetto': solve
+	}  
+}
+
+if __name__ == "__main__":
+    print solve()
