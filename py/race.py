@@ -6,6 +6,7 @@
 import imp
 import os
 import time
+import sys
 import warnings
 
 MIN_SOLVE_TIME_MILLIS = 1000
@@ -111,12 +112,19 @@ def scan_raceables(filter_text=''):
     return raceables_by_problem
 
 
-def run_race():
+def run_race(focus_problem=None):
     raceables_by_problem = scan_raceables()
-    print('found [%d] problems' % (len(raceables_by_problem)))
-    for problem in raceables_by_problem:
+    problem_names = raceables_by_problem.keys()
+
+    if (focus_problem): # concentrate on a single problem.
+        print("Focusing on problem [%s]" % (focus_problem))
+        problem_names = filter(lambda x: x == focus_problem, problem_names)
+
+    print('found [%d] problems' % (len(problem_names)))
+
+    for problem in problem_names:
         print("-----------------------------------------------------")
-        print("Running solutions for problem [%s]" % problem)
+        print(" Running solutions for problem [%s]" % problem)
         print("-----------------------------------------------------")
         raceables = raceables_by_problem[problem]
         results = []
@@ -134,4 +142,9 @@ def run_race():
 
 
 if __name__ == "__main__":
-    run_race()
+    # filter on a particular problem.
+    focus_problem = None
+    if len(sys.argv) > 1:
+        focus_problem = sys.argv[1]
+
+    run_race(focus_problem)
