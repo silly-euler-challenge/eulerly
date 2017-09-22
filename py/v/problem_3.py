@@ -1,47 +1,43 @@
-def range_gen(start,end):
+def genera_primo(primo, primi):
 	'''
-	Generatore di range: non tiene in memoria tutto il range, ma solo l'ultimo elemento richiesto
+	Genera il (primo) numero primo successivo a "primo" (uhmmmm...)
+	La lista "primi" tiene in memoria tutti i numeri primi calcolati fino a quel momento
 	'''
-	i=start
-	while i < end:
-		yield i
-		i += 1
+	candidato = primo
+	flag = 1
+	if candidato == 1 or candidato == 2:
+		primi.append(candidato+1)
+		return candidato+1, primi
 
-def test_primalita(p):
-	stop = (int)(p/2)	
-	for i in range_gen(2,stop):
-		if(p % i == 0):
-			return 1 
-	return 0
-
-def genera_primo(p):
-	'''
-	Genera il (primo) numero primo successivo a p
-	'''
-	candidato = p+2
-	while test_primalita(candidato):
+	while flag == 1:
 		candidato += 2
-	return candidato
-
+		for primo in primi:
+			flag = 0
+			if(candidato % primo == 0):
+				flag == 1
+	primi.append(candidato)
+	return candidato, primi
+	
 def calcola_fattore(N):
 	'''
-	Calcola i fattori primi dell'intero N 
+	Calcola e stampa i fattori primi di N
 	'''
-	primo = 7
+	primi = [1]
+	primo = 1
 	fattori = [1]
 	while primo < N:
-		primo = genera_primo(primo)
-		if (N % primo == 0):
+		primo, primi = genera_primo(primo, primi)
+		while (N % primo == 0):
 			fattori.append(primo)
 			N = N/primo
-	return max(fattori)
+	return fattori
 
 def solve():
 	return calcola_fattore(600851475143)
 
 race = {
 	'author': 'valeria',
-	'problemName': '1',
+	'problemName': '3',
 	'raceables': { 
 		'blocchetto': solve
 	}  
