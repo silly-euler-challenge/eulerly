@@ -18,7 +18,7 @@ def naive_w_strings():
             if palindrome % div1 == 0:
                 div2 = palindrome // div1
                 if div2 < 1000 and div2 > 99:
-                    return [palindrome, div1, div2, div1 * div2]
+                    return palindrome
     return -1 # :(
 
 race = {
