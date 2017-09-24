@@ -149,6 +149,30 @@ def scan_raceables(filter_text=''):
     return raceables_by_problem
 
 
+def enumerate_w_ties(results, tie_threshold=0.02):
+    '''
+    Generator for RaceableRunResult that will yield runs that are tied in first place.
+    If no run is tied at the top score, the generator will not yield anything.
+    We consider a draw 
+    '''
+    if results:
+        sorted_results = results
+        if len(results) > 1:
+            sorted_results = sorted(results, key=lambda x: x.score(), reverse=True)
+            highest_score = sorted_results[0].score()
+            is_tied_at_top = lambda score: (1 - (second_highest_score / highest_score)) < tie_threshold
+            second_highest_score = sorted_results[1].score()
+            has_tie = is_tied_at_top(second_highest_score)
+        else:
+            has_tie = False
+            
+        for i, result in enumerate(sorted_results):
+            if i < 2:
+                yield i, result, has_tie
+            else:
+                yield i, result, is_tied_at_top(result.score)
+        
+
 def run_race(focus_problem=None):
     raceables_by_problem = scan_raceables()
     problem_names = raceables_by_problem.keys()
@@ -171,12 +195,12 @@ def run_race(focus_problem=None):
             res = RaceableResult(result_value, elapsed, iterations)
             results.append(RaceableRunResult(raceable=r, result=res))
 
-        # sort on score desc.
-        # faster (i.e. higher #iterations/elapsed) wins.
-        sorted_results = sorted(results, key=lambda x: x.score(), reverse=True)
-        for i, item in enumerate(sorted_results):
-            print("#%d - %s" % (i + 1, str(item)))
-
+        for i, item, is_tied_at_top in enumerate_w_ties(results):
+            if (is_tied_at_top):
+                print("#1 (tied) - %s" % (str(item)))
+            else:
+                print("#%d - %s" % (i + 1, str(item)))
+            
 
 if __name__ == "__main__":
     # filter on a particular problem.
