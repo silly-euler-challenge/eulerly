@@ -8,27 +8,63 @@ import os
 import time
 import sys
 import warnings
+import gc
+from multiprocessing import Process, Queue
 
-MIN_SOLVE_TIME_MILLIS = 1000
+MIN_SOLVE_TIME_MILLIS = 2000
 
-def current_time_millis():
-    return int(round(time.time() * 1000))
-
-def execute_task_repeatedly(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
+class Clock:
     '''
-    Executes task() repeatedly until min_execution_time has passed.
-    return the tuple (last_result, iterations, elaspsed_time_millis)
+    A simple clock that returns milliseconds - unfortunately not cpu time (available only in py 3.3)
     '''
-    iteration = 0
-    start_time = current_time_millis()
-    result = None
-    while True:
-        iteration += 1
-        result = task()
-        elapsed = current_time_millis() - start_time;
-        if (elapsed > MIN_SOLVE_TIME_MILLIS):
-            break
-    return result, iteration, elapsed
+    def __init__(self):
+        # chose the best clock depending on OS.
+        unix_clock_ms = lambda: int(round(time.time() * 1000))
+        win32_clock_ms = lambda: int(round(time.clock() * 1000))
+        self.__clock = win32_clock_ms if sys.platform == "win32" else unix_clock_ms
+        self.__start_time = None
+
+    def start(self):
+        self.__start_time = self.__clock()
+
+    def elapsed(self):
+        if not self.__start_time:
+            return 0
+        return self.__clock() - self.__start_time
+
+
+def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
+    '''
+    Executes task() repeatedly until min_execution_time has passed in a child process, 
+    returning the tuple (last_result, iterations, elaspsed_time_millis)
+    '''
+
+    # executes task in a child process, and get the result via an IPC mechanism (queue)
+    # the forked process will put into the queue.
+    q = Queue()
+
+    # this is what we going to execute in the forked process
+    def f(queue, task):
+        gc.disable() # garbage collection might affect timings.
+        clock = Clock()
+        iteration = 0
+        result = None
+        clock.start()
+        while True:
+            iteration += 1
+            result = task()
+            elapsed = clock.elapsed()
+            if (elapsed > min_execution_time):
+                break
+        q.put((result, iteration, elapsed))
+        gc.enable() # should not be needed, the forked process just dies after this, but for symmetry...
+
+
+    p = Process(target=f, args=(q, task))
+    p.start()
+    results =  q.get() # get the result
+    p.join()
+    return results
 
 
 class Raceable():
@@ -37,6 +73,7 @@ class Raceable():
         self.author=author
         self.description = description
         self.implementation = implementation
+
 
 class RaceableResult():
     def __init__(self, value=None, elapsed_millis=0, iterations=1):
@@ -130,7 +167,7 @@ def run_race(focus_problem=None):
         results = []
         for r in raceables:
             print("... running %s's %s" % (r.author, r.description))
-            result_value, iterations, elapsed = execute_task_repeatedly(r.implementation)
+            result_value, iterations, elapsed = execute_in_child_process(r.implementation)
             res = RaceableResult(result_value, elapsed, iterations)
             results.append(RaceableRunResult(raceable=r, result=res))
 
