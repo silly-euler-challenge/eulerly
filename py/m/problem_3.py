@@ -19,6 +19,22 @@ def is_prime(n):
         i += 2
     return True;
 
+def factorize(n=600851475143):
+    factors = [1]
+
+    m = n
+    while m % 2 == 0:
+        m //= 2
+        factors.append(2)
+
+    i = 3
+    while m > 1:
+        while (m % i == 0) and is_prime(i):
+            m //= i
+            factors.append(i)
+        i += 2
+    return factors
+
 def solve1(n=600851475143):
     factors = []
     i = 3
@@ -44,7 +60,8 @@ race = {
     'problemName': '3',
     'author': 'marco',
     'raceables': { 
-        'inelegant': solve1
+        'wrong_but_working':  solve1,
+        'right_but_slow': factorize
     }  
 }
 
