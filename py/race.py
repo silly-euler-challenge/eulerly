@@ -66,7 +66,6 @@ def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     p.join()
     return results
 
-
 class Raceable():
     def __init__(self, problem_name=None, author=None, description=None, implementation=None):
         self.problem_name = problem_name
