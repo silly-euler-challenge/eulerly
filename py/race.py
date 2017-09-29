@@ -32,6 +32,21 @@ class Clock:
             return 0
         return self.__clock() - self.__start_time
 
+# this is what we going to execute in the forked process
+def f(queue, task, min_execution_time):
+    gc.disable() # garbage collection might affect timings.
+    clock = Clock()
+    iteration = 0
+    result = None
+    clock.start()
+    while True:
+        iteration += 1
+        result = task()
+        elapsed = clock.elapsed()
+        if (elapsed > min_execution_time):
+            break
+    queue.put((result, iteration, elapsed))
+    gc.enable() # should not be needed, the forked process just dies after this, but for symmetry...
 
 def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     '''
@@ -42,25 +57,7 @@ def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     # executes task in a child process, and get the result via an IPC mechanism (queue)
     # the forked process will put into the queue.
     q = Queue()
-
-    # this is what we going to execute in the forked process
-    def f(queue, task):
-        gc.disable() # garbage collection might affect timings.
-        clock = Clock()
-        iteration = 0
-        result = None
-        clock.start()
-        while True:
-            iteration += 1
-            result = task()
-            elapsed = clock.elapsed()
-            if (elapsed > min_execution_time):
-                break
-        q.put((result, iteration, elapsed))
-        gc.enable() # should not be needed, the forked process just dies after this, but for symmetry...
-
-
-    p = Process(target=f, args=(q, task))
+    p = Process(target=f, args=(q, task, min_execution_time))
     p.start()
     results =  q.get() # get the result
     p.join()
