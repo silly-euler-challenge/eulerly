@@ -35,7 +35,7 @@ race = {
 	'author': 'valeria',
 	'problemName': '8',
 	'raceables': { 
-		'blocchetto': solve
+	'blocchetto': solve
 	}  
 }
 
