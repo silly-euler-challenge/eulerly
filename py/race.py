@@ -9,6 +9,7 @@ import time
 import sys
 import warnings
 import gc
+import uuid
 from multiprocessing import Process, Queue
 
 MIN_SOLVE_TIME_MILLIS = 2000
@@ -33,22 +34,34 @@ class Clock:
         return self.__clock() - self.__start_time
 
 # this is what we going to execute in the forked process
-def f(queue, task, min_execution_time):
+def f(queue, module_path, task, min_execution_time):
     gc.disable() # garbage collection might affect timings.
+
     clock = Clock()
     iteration = 0
     result = None
+    module_name = str(uuid.uuid4())
+    print 1, module_name, module_path, task
+    module = imp.load_source(module_name, module_path)
+
+    if not hasattr(module, task):
+        queue.put((None, 1, min_execution_time)) # fake results for not-found stuff.
+
+    runnable = getattr(module, task)
+
     clock.start()
     while True:
         iteration += 1
-        result = task()
+        result = runnable()
         elapsed = clock.elapsed()
         if (elapsed > min_execution_time):
             break
+
+    print "DONE, signaling back to main process..."
     queue.put((result, iteration, elapsed))
     gc.enable() # should not be needed, the forked process just dies after this, but for symmetry...
 
-def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
+def execute_in_child_process(task_name, module_path, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     '''
     Executes task() repeatedly until min_execution_time has passed in a child process, 
     returning the tuple (last_result, iterations, elaspsed_time_millis)
@@ -57,14 +70,16 @@ def execute_in_child_process(task, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     # executes task in a child process, and get the result via an IPC mechanism (queue)
     # the forked process will put into the queue.
     q = Queue()
-    p = Process(target=f, args=(q, task, min_execution_time))
+    print 2, module_path, task_name
+    p = Process(target=f, args=(q, module_path, task_name, min_execution_time))
     p.start()
     results =  q.get() # get the result
     p.join()
     return results
 
 class Raceable():
-    def __init__(self, problem_name=None, author=None, description=None, implementation=None):
+    def __init__(self, problem_name=None, author=None, description=None, module_path=None, implementation=None):
+        self.module_path = module_path
         self.problem_name = problem_name
         self.author=author
         self.description = description
@@ -106,14 +121,15 @@ def load_raceables_from_file(filepath):
     with warnings.catch_warnings(): # suppressing warnings about module naming not being consistent... who cares.
 
         warnings.simplefilter("ignore")
-        module = imp.load_source("%s_%s" % (parent_dir, basename), filepath)
+        module_name = basename
+        module = imp.load_source(module_name, filepath)
         if hasattr(module, 'race') and 'raceables' in module.race:
             problem_name = module.race.get('problemName', basename)
             author = module.race.get('author', 'unknown')
             print("looking into [%s]" % filepath)
             for desc, impl in module.race['raceables'].iteritems():
                 print("found %s's %s" % (author, desc))
-                raceables.append(Raceable(problem_name, author, desc, impl))
+                raceables.append(Raceable(problem_name, author, desc, filepath, impl.func_name))
 
     return raceables
 
@@ -187,7 +203,7 @@ def run_race(focus_problem=None):
         results = []
         for r in raceables:
             print("... running %s's %s" % (r.author, r.description))
-            result_value, iterations, elapsed = execute_in_child_process(r.implementation)
+            result_value, iterations, elapsed = execute_in_child_process(r.implementation, r.module_path)
             res = RaceableResult(result_value, elapsed, iterations)
             results.append(RaceableRunResult(raceable=r, result=res))
 

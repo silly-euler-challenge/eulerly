@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 
 def solve():
@@ -34,13 +35,13 @@ race = {
 	'author': 'valeria',
 	'problemName': '9',
 	'raceables': { 
-		'brute': solve
-		'insù': solve2
+		'brute': solve,
+		'insù': solve2,
 		'ingiù': solve3
 	}  
 }
 
 if __name__ == "__main__":
-  print solve()
-  print solve2()
+	print solve()
+	print solve2()
 	print solve3()
