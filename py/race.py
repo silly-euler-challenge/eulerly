@@ -17,11 +17,13 @@ MIN_SOLVE_TIME_MILLIS = 2000
 class Clock:
     '''
     A simple clock that returns milliseconds - unfortunately not cpu time (available only in py 3.3)
+    The best clock is used for each platform (win32 -> time.clock(), nix -> time.time()).
+    (Best is according to "general wisdom of the internet")
     '''
     def __init__(self):
         # chose the best clock depending on OS.
         unix_clock_ms = lambda: int(round(time.time() * 1000))
-        win32_clock_ms = lambda: int(round(time.clock() * 1000))
+        win32_clock_ms = lambda: int(round(time.time() * 1000))
         self.__clock = win32_clock_ms if sys.platform == "win32" else unix_clock_ms
         self.__start_time = None
 
@@ -41,7 +43,6 @@ def f(queue, module_path, task, min_execution_time):
     iteration = 0
     result = None
     module_name = str(uuid.uuid4())
-    print 1, module_name, module_path, task
     module = imp.load_source(module_name, module_path)
 
     if not hasattr(module, task):
@@ -57,33 +58,32 @@ def f(queue, module_path, task, min_execution_time):
         if (elapsed > min_execution_time):
             break
 
-    print "DONE, signaling back to main process..."
     queue.put((result, iteration, elapsed))
     gc.enable() # should not be needed, the forked process just dies after this, but for symmetry...
 
-def execute_in_child_process(task_name, module_path, min_execution_time=MIN_SOLVE_TIME_MILLIS):
+def run_in_child_process(task_name, module_path, min_execution_time=MIN_SOLVE_TIME_MILLIS):
     '''
     Executes task() repeatedly until min_execution_time has passed in a child process, 
     returning the tuple (last_result, iterations, elaspsed_time_millis)
     '''
 
     # executes task in a child process, and get the result via an IPC mechanism (queue)
-    # the forked process will put into the queue.
+    # the forked process will put into the queue, the main process will wait (indefinitely) for the result
     q = Queue()
-    print 2, module_path, task_name
     p = Process(target=f, args=(q, module_path, task_name, min_execution_time))
+    p.daemon = True
     p.start()
-    results =  q.get() # get the result
+    results = q.get() # get the result
     p.join()
     return results
 
 class Raceable():
-    def __init__(self, problem_name=None, author=None, description=None, module_path=None, implementation=None):
+    def __init__(self, problem_name=None, author=None, description=None, module_path=None, impl_name=None):
         self.module_path = module_path
         self.problem_name = problem_name
         self.author=author
         self.description = description
-        self.implementation = implementation
+        self.impl_name = impl_name
 
 
 class RaceableResult():
@@ -129,11 +129,10 @@ def load_raceables_from_file(filepath):
             print("looking into [%s]" % filepath)
             for desc, impl in module.race['raceables'].iteritems():
                 print("found %s's %s" % (author, desc))
+                # assumes that impl is a function with a func_name attr (it works for top level defined functions but not for the rest)
                 raceables.append(Raceable(problem_name, author, desc, filepath, impl.func_name))
 
     return raceables
-
-
 
 def scan_raceables(filter_text=''):
     '''
@@ -203,7 +202,7 @@ def run_race(focus_problem=None):
         results = []
         for r in raceables:
             print("... running %s's %s" % (r.author, r.description))
-            result_value, iterations, elapsed = execute_in_child_process(r.implementation, r.module_path)
+            result_value, iterations, elapsed = run_in_child_process(r.impl_name, r.module_path)
             res = RaceableResult(result_value, elapsed, iterations)
             results.append(RaceableRunResult(raceable=r, result=res))
 
