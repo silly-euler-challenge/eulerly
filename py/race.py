@@ -99,6 +99,12 @@ class RaceableResult():
         return float(self.iterations) / float(self.elapsed_millis)
 
 
+def to_str_trunc(obj, max_len=40):
+    s = str(obj)
+    str_len = max_len - 2
+    return s[:str_len] + (s[str_len:] and '..')
+    
+
 class RaceableRunResult():
     def __init__(self, raceable=None, result=None):
         self.raceable = raceable
@@ -108,7 +114,7 @@ class RaceableRunResult():
         return self.result.score()
 
     def __str__(self):
-        return "[%s :: %s] result [%s] elapsed [%d] iterations [%d] score [%f]" % (self.raceable.author, self.raceable.description, str(self.result.value), self.result.elapsed_millis, self.result.iterations, self.score())
+        return "[%s :: %s] result [%s] elapsed [%d] iterations [%d] score [%f]" % (self.raceable.author, self.raceable.description, to_str_trunc(self.result.value), self.result.elapsed_millis, self.result.iterations, self.score())
 
 
 def load_raceables_from_file(filepath):
