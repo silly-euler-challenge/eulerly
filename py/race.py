@@ -12,6 +12,9 @@ import gc
 import uuid
 from multiprocessing import Process, Queue
 
+# Allow import Eratostene
+sys.path.append(sys.path[0] + "/v")
+
 MIN_SOLVE_TIME_MILLIS = 2000
 
 class Clock:
@@ -103,7 +106,7 @@ def to_str_trunc(obj, max_len=40):
     s = str(obj)
     str_len = max_len - 2
     return s[:str_len] + (s[str_len:] and '..')
-    
+
 
 class RaceableRunResult():
     def __init__(self, raceable=None, result=None):
