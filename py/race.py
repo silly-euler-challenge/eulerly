@@ -45,7 +45,7 @@ def f(queue, module_path, task, min_execution_time):
     clock = Clock()
     iteration = 0
     result = None
-    module_name = str(uuid.uuid4())
+    module_name = str(uuid.uuid4()) # just a random module name... 
     module = imp.load_source(module_name, module_path)
 
     if not hasattr(module, task):
@@ -135,9 +135,9 @@ def load_raceables_from_file(filepath):
         if hasattr(module, 'race') and 'raceables' in module.race:
             problem_name = module.race.get('problemName', basename)
             author = module.race.get('author', 'unknown')
-            print("looking into [%s]" % filepath)
+            # print("looking into [%s]" % filepath)
             for desc, impl in module.race['raceables'].iteritems():
-                print("found %s's %s" % (author, desc))
+                # print("found %s's %s" % (author, desc))
                 # assumes that impl is a function with a func_name attr (it works for top level defined functions but not for the rest)
                 raceables.append(Raceable(problem_name, author, desc, filepath, impl.func_name))
 
@@ -173,7 +173,7 @@ def enumerate_w_ties(results, tie_threshold=0.02):
     '''
     Generator for RaceableRunResult that will yield runs that are tied in first place.
     If no run is tied at the top score, the generator will not yield anything.
-    We consider a draw 
+    We consider a draw if the score is within the tie threshold.
     '''
     if results:
         sorted_results = results
@@ -198,7 +198,7 @@ def run_race(focus_problem=None):
     problem_names = raceables_by_problem.keys()
 
     if (focus_problem): # concentrate on a single problem.
-        print("Focusing on problem [%s]" % (focus_problem))
+        # print("Focusing on problem [%s]" % (focus_problem))
         problem_names = filter(lambda x: x == focus_problem, problem_names)
 
     print('found [%d] problems' % (len(problem_names)))
