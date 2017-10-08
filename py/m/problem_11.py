@@ -29,13 +29,19 @@ def as_int_matrix(string_grid):
 	# pesky empty lines...
 	return map(lambda line: map(int, line.split()), filter(lambda line: len(line) > 0, string_grid.splitlines()))
 
+#############################################################################
+#
+# Take 1, simple, but naive.
+# 
+#############################################################################
+
 # possible directions for walking the matrix
-EAST = 1, 0
+EAST = 0, 1
 SOUTH_EAST = 1, 1
-SOUTH = 0, 1
+SOUTH = 1, 0
 NORTH_EAST = -1, 1
 
-def next_pos(start_pos, direction, offset=1):
+def next_pos(start_pos, direction, offset):
 	'''Gives the next coordinates in a particular direction'''
 	x, y = start_pos
 	dir_x, dir_y = direction
@@ -70,14 +76,111 @@ def simple(string_grid=data, win_len=4):
 		max_prod = max(max_prod, p1, p2, p3, p4)
 	return max_prod
 
+#############################################################################
+#
+# Take 2, avoiding calculating the prods when there is a zero factor.
+#
+#############################################################################
+
+# circular buffers are taken from problem 8.
+class CircularBuffer:
+	def __init__(self, size):
+		self.size = size
+		self.data = [0 for x in xrange(size)]
+		self.oldest = 0 # points to the oldest item in the buffer (i.e. the first one to overwrite when a new factor arrives)
+
+	def add(self, item):
+		removed = self.data[self.oldest]
+		self.data[self.oldest] = item
+		self.oldest = (self.oldest + 1) % self.size
+		return removed
+
+class CircularProductBuffer:
+	def __init__(self, size):
+		self.buf = CircularBuffer(size)
+		self.max_prod = 0
+		self.current_prod = 1
+		self.zeros = size
+
+	def add(self, item):
+		'''Divide for what's leaving the buffer, multiply by what's entering, and take care of zeros'''
+		removed = self.buf.add(item)
+		if item:
+			self.current_prod *= item
+		else:
+			self.zeros += 1
+		if removed:
+			self.current_prod /= removed
+		else:
+			self.zeros -= 1
+		if not self.zeros:
+			self.max_prod = max(self.max_prod, self.current_prod)
+
+GO_EAST = 0, 1
+GO_SOUTH_EAST = 1, 1
+GO_SOUTH = 1, 0
+GO_NORTH_EAST = -1, 1
+
+# Trails generator. Each generator yields the starting coord of the trails, the lentgh of the trail
+# and the direction in which to go.
+def diags_south_east(n, win_len):
+	'''yields starting pos and len of the trail'''
+	yield 0, 0, n, GO_SOUTH_EAST
+	for k in xrange(1, n):
+		yield 0, k, n - k, GO_SOUTH_EAST
+		yield k, 0, n - k, GO_SOUTH_EAST
+
+def diags_north_west(n, win_len):
+	'''yields starting pos and len of the trail'''
+	yield n - 1, 0, n, GO_NORTH_EAST
+	for k in xrange(1, n):
+		yield n - 1 - k, 0, n - k, GO_NORTH_EAST
+		yield n - 1, k, n - k, GO_NORTH_EAST
+
+def horizontal_trails(n, win_len):
+	for k in xrange(n):
+		yield k, 0, n, GO_EAST
+
+def vertical_trails(n, win_len):
+	for k in xrange(n):
+		yield 0, k, n, GO_SOUTH
+
+def max_on_trails(matrix, n, trail_generator, win_len):
+	max_prod = 0
+	for x0, y0, length, direction in trail_generator(n, win_len):
+		buf = CircularProductBuffer(win_len)
+		dx, dy = direction
+		for offset in xrange(length):
+			x, y = x0 + offset * dx, y0 + offset * dy
+			factor = matrix[x][y]
+			buf.add(factor)
+		max_prod = max(max_prod, buf.max_prod)
+	return max_prod
+
+def better(string_grid=data, win_len=4):
+	matrix = as_int_matrix(string_grid)
+	n = len(matrix) # assume it's square.
+	# For all trails, walk them feeding items in circular buffers and getting the max prod out of them.
+	m1 = max_on_trails(matrix, n, horizontal_trails, win_len)
+	m2 = max_on_trails(matrix, n, vertical_trails, win_len)
+	m3 = max_on_trails(matrix, n, diags_south_east, win_len)
+	m4 = max_on_trails(matrix, n, diags_north_west, win_len)
+	return max(m1, m2, m3, m4)
+
+#
+# Chores
+#
 race = {
     'problemName': '11',
     'author': 'marco',
     'raceables': { 
-        'simple': simple
+        'simple': simple, 
+        'better': better
     }
 }
 
 if __name__ == "__main__":
 	print(simple())
+	print(better())
+
     
