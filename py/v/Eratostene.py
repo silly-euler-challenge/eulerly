@@ -64,6 +64,23 @@ def primes_xrange(nth_prime):
 
 		i+=2
 
+def prime_factors(n):
+	'''
+	Returns the list of prime factors and their exponent, e.g. for 144 returns ([2, 3], [4, 2]) meaning 2^4 * 3^2
+	'''
+	p_facts = []
+	exponents = []
+	for p in primes_xrange(n // 2):
+		exp = 0
+		while (n % p == 0):
+			n //= p
+			exp += 1
+			p_facts.append(p)
+		exponents.append(exp)
+		if n == 1:
+			break
+	return list(set(p_facts)), exponents
+
 
 race = {
     'problemName': 'eratostene',
