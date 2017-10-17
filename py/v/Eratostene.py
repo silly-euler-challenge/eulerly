@@ -64,6 +64,38 @@ def primes_xrange(nth_prime):
 
 		i+=2
 
+
+# this is a hacky stateful list of known primes that gets updated when 
+# accessed by primes_forever and friends.
+KNOWN_PRIMES = NonEraTostene(100)
+
+def primes_forever():
+	'''Generates primes... forever. Previously generated primes are memoized'''
+	primes = KNOWN_PRIMES
+	len_primes = len(KNOWN_PRIMES)
+
+	i = None
+	for p in primes:
+		i = p
+		yield p
+
+	while True:
+		sqrt_of_i = int(math.sqrt(i)) + 1
+		k = 1
+		is_prime = True
+		while k < len_primes and (primes[k] <= sqrt_of_i):
+			if i % primes[k] == 0:
+				is_prime = False
+			k += 1
+
+		if is_prime:
+			primes.append(i)
+			len_primes += 1
+			yield i
+
+		i+=2
+
+
 def prime_factors(n):
 	'''
 	Returns the list of prime factors and their exponent, e.g. for 144 returns ([2, 3], [4, 2]) meaning 2^4 * 3^2
@@ -71,6 +103,23 @@ def prime_factors(n):
 	p_facts = []
 	exponents = []
 	for p in primes_xrange(n // 2):
+		exp = 0
+		while (n % p == 0):
+			n //= p
+			exp += 1
+			p_facts.append(p)
+		exponents.append(exp)
+		if n == 1:
+			break
+	return list(set(p_facts)), exponents
+
+def prime_factors2(n):
+	'''
+	Returns the list of prime factors and their exponent, e.g. for 144 returns ([2, 3], [4, 2]) meaning 2^4 * 3^2
+	'''
+	p_facts = []
+	exponents = []
+	for p in primes_forever():
 		exp = 0
 		while (n % p == 0):
 			n //= p
