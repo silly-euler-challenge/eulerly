@@ -180,7 +180,7 @@ def enumerate_w_ties(results, tie_threshold=0.02):
         if len(results) > 1:
             sorted_results = sorted(results, key=lambda x: x.score(), reverse=True)
             highest_score = sorted_results[0].score()
-            is_tied_at_top = lambda score: (1 - (second_highest_score / highest_score)) < tie_threshold
+            is_tied_at_top = lambda score: (1 - (score / highest_score)) < tie_threshold
             second_highest_score = sorted_results[1].score()
             has_tie = is_tied_at_top(second_highest_score)
         else:
@@ -190,7 +190,7 @@ def enumerate_w_ties(results, tie_threshold=0.02):
             if i < 2:
                 yield i, result, has_tie
             else:
-                yield i, result, is_tied_at_top(result.score)
+                yield i, result, is_tied_at_top(result.score())
         
 
 def run_race(focus_problem=None):
