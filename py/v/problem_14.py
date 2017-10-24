@@ -73,8 +73,8 @@ race = {
     'problemName': '14',
     'author': 'valeria',
     'raceables': { 
-	    'very_brute': very_brute
-        'better': better
+        'better': better,
+		'very_brute': very_brute
     }
 }
 
