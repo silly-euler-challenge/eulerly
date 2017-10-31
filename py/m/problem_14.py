@@ -12,7 +12,7 @@ def collatz_len(n, known_lengths):
 		if (m % 2 == 0):
 			m //= 2
 		else:
-			m = 3 * m + 1
+			m = (3 * m + 1) / 2 # thanks valeria.
 		seq_len += 1
 	known_lengths[n] = seq_len + 1 # +1 here is for the last one on the sequence
 	return seq_len, known_lengths
