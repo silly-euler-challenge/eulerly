@@ -77,7 +77,7 @@ def sum_of_divisors(n):
     return reduce(lambda x, y: x+y, proper_divisors(n), 0)
 
 
-def amicable_below(n=10000):
+def amicable_sum_below(n=10000):
     amicables = []
     divsums = {}
     for i in xrange(3, n + 1):
@@ -91,20 +91,37 @@ def amicable_below(n=10000):
                 if divsums[friend] == i:
                     amicables.append(i)
                     amicables.append(divsums[friend])
-    return set(amicables)
+    #print sorted(set(amicables))
+    return reduce(lambda x, y: x + y, set(amicables))
+
+
+def amicables_sum_below2(n=10000):
+    friends = {}
+    for a in xrange(3, n + 1):
+        b = sum_of_divisors(a)
+        if b <= n:
+            c = sum_of_divisors(b)
+            if c == a:
+                friends[a] = b
+                friends[b] = a
+    # print sorted(friends.keys())
+    # print friends
+    return reduce(lambda x, y: x + y, friends.keys())
+
 
 
 race = {
     'problemName': '21',
     'author': 'marco',
     'raceables': {
-        'amicables': amicable_below
+        # 'amicables': amicable_sum_below,
+        'naive': amicables_sum_below2
     }
 }
 
 
 if __name__ == "__main__":
-    nn = [220, 284]
+    nn = [6, 28]
     for n in nn:
         print 'prime factors', n, prime_factors(n)
         print '     divisors', n, proper_divisors(n)
