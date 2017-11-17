@@ -99,7 +99,7 @@ def amicables_sum_below2(n=10000):
     friends = {}
     for a in xrange(3, n + 1):
         b = sum_of_divisors(a)
-        if b <= n:
+        if b <= n and b != a:
             c = sum_of_divisors(b)
             if c == a:
                 friends[a] = b
