@@ -6,11 +6,37 @@
 # 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...
 # By considering the terms in the Fibonacci sequence whose values do not exceed four million, find the sum of the even-valued terms.
 
+import math
+
+##########
+# Solution with fibonacci sequence closed formula
+##########
+sq5 = math.sqrt(5)
+def fibonacci(n):
+    return int(1 / sq5 * ((0.5 + sq5 / 2) ** n - (0.5 - sq5 / 2) ** n))
+
+def fibonacci_cf_generator(maxvalue):
+    n, value  = 0, 0
+    while value <= maxvalue:
+        yield value
+        n += 1
+        value = fibonacci(n)
+
+def euler_cf_generator(n=4000000):
+    total = 0
+    for i in fibonacci_cf_generator(n):
+        if i % 2 != 0:
+            total += i
+    return total
+
+def solve_cf_generator(n=4000000):
+    return euler_cf_generator(n)
+
 ##########
 # Naive solution with fibonacci sequence generator
 ##########
 
-def fibonacci_sequence(maxvalue):
+def fibonacci_generator(maxvalue):
     a, b = 0,1
     while a <= maxvalue:
         yield a
@@ -18,7 +44,7 @@ def fibonacci_sequence(maxvalue):
 
 def euler_naive_generator(n):
     total = 0
-    for i in fibonacci_sequence(n):
+    for i in fibonacci_generator(n):
         #print(i)
         if i % 2 != 0:
             total += i
@@ -58,11 +84,12 @@ race = {
     'author': 'erik',
     'raceables': {
         'naive_recursive': solve_naive_recursive,
-        'naive_generator': solve_naive_generator
+        'naive_generator': solve_naive_generator,
+        'cf_generator': solve_cf_generator
     }
 }
 
 if __name__ == "__main__":
-    print(solve_naive_generator())
+    print solve_cf_generator()
 
 
