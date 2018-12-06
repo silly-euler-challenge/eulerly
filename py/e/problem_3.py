@@ -28,7 +28,7 @@ def euler(n):
     return factors
 
 def solve(n=600851475143):
-    euler(n)
+    return euler(n)
 
 race = {
     'problemName': '3',
